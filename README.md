@@ -1,46 +1,55 @@
-# nixos-sovereign-host
+# nixos-sovereign-host-censorship
 
-Declarative self-sovereign hosting stack for communities.
+Censorship-resilience layer for [`nixos-sovereign-host`](https://github.com/EnovaMaker/nixos-sovereign-host) — declarative Tor onion services, an obfs4 bridge relay, metadata hardening, and a one-flag lockdown mode, for NixOS.
 
-## Quick start
+> **Design phase.** This tree documents the architecture only. It intentionally ships no
+> modules, CLI or tests — see `docs/ARCHITECTURE.md` for the design and `docs/ROADMAP.md` for
+> what is planned and in what order.
 
-```nix
-{
-  inputs.sovereign-host.url = "github:EnovaMaker/nixos-sovereign-host";
+## The problem
 
-  outputs = { self, nixpkgs, sovereign-host }: {
-    nixosConfigurations.my-server = nixpkgs.lib.nixosSystem {
-      modules = [
-        sovereign-host.nixosModules.sovereign-host
-        {
-          services.sovereign = {
-            enable = true;
-            matrix.enable = true;
-            syncthing.enable = true;
-            monitoring.enable = true;
-            backup.enable = true;
-            sso.enable = true;
-          };
-        }
-      ];
-    };
-  };
-}
-```
+Operators of independent, self-hosted communication infrastructure — community groups,
+independent media, diaspora organizers — have no declarative, tested way to stay reachable
+when their domain or IP range is blocked. Today that work is manual, ad-hoc and undocumented,
+and it demands specialist networking knowledge most small operators do not have.
 
-## Architecture
+The result is that self-hosting, otherwise a meaningful path to digital sovereignty, becomes a
+single point of failure the moment a government decides to block it.
 
-```
-sovereign (services.sovereign.enable = true)
-├── matrix     — Synapse + bridges + TLS
-├── syncthing  — P2P file sync
-├── monitoring — Prometheus + Grafana
-├── backup     — Borg/restic automation
-└── sso        — Authelia OIDC
-```
+## What this layer adds
 
-All modules work independently or together with zero-config integration.
+Built on top of the existing `services.sovereign.*` modules, and on nixpkgs' own
+`services.tor` rather than around it:
+
+| Capability | What it does |
+|---|---|
+| **Onion publishing** | Reach the Matrix client API — and optionally file sync, SSO and monitoring — over Tor onion services, from a single declarative option |
+| **obfs4 bridge relay** | Contribute circumvention capacity to the shared Tor network, not only to your own users |
+| **Metadata hardening** | Reduce what the stack logs about its users, deliberately and by default |
+| **Lockdown mode** | One flag forces onion-only reachability and hardening together, reversible with `nixos-rebuild switch --rollback` |
+| **Auditable uptime** | A privacy-preserving record that the relay actually ran, using Tor's own aggregate statistics — designed so it survives metadata hardening |
+
+## What it is not
+
+- **Not a fork of Tor tooling.** The Tor Project's onion services and the obfs4 pluggable
+  transport are the primitives; we do not reimplement either.
+- **Not a replacement for `services.tor`.** nixpkgs already ships a mature module and we
+  configure it. Reading its source showed that `relay.role = "bridge"` already sets up obfs4
+  by default, so our own duplicate of that logic was deleted rather than kept.
+- **Not a claim that your server is safe.** This makes a deployment *reachable under network
+  blocking*. That is a different thing from secure, and conflating the two would be
+  irresponsible toward anyone whose safety depends on it.
+
+## Status
+
+Design preview. The implementation lives in a private tree and is published as milestones are
+delivered.
 
 ## License
 
-MIT
+[MIT](LICENSE) — Copyright (c) 2026 Delfim Leite (EnovaMaker)
+
+## Funding
+
+Prepared as a proposal to the [Open Technology Fund](https://www.opentech.fund/) Internet
+Freedom Fund. Not yet awarded; this repository is a design preview, not a funded deliverable.

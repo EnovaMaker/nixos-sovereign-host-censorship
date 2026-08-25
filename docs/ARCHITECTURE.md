@@ -1,56 +1,87 @@
-# Architecture — nixos-sovereign-host
+# Architecture — censorship-resilience layer
 
-## Overview
+> Design document. No implementation in this tree.
 
-nixos-sovereign-host is a framework of composable NixOS modules. Each module
-provides a `services.sovereign.<service>` interface. Services are designed to
-work independently or together with zero-config integration.
-
-**Funded vs. bonus scope:** the Restack grant
-funds hardening Matrix + Syncthing specifically — the piece not already covered
-by `ibizaman/selfhostblocks` (NLnet/NGI Zero-funded). Monitoring, backup and SSO
-already exist below and ship as unfunded bonus modules.
-
-## Module architecture
+## Where this sits
 
 ```
-sovereign (services.sovereign.enable = true)
-├── matrix     (services.sovereign.matrix.*)     — Synapse/Dendrite + bridges [funded]
-├── syncthing  (services.sovereign.syncthing.*)  — P2P file sync [funded]
-├── monitoring (services.sovereign.monitoring.*) — Prometheus + Grafana [bonus]
-├── backup     (services.sovereign.backup.*)     — Borg/restic automation [bonus]
-└── sso        (services.sovereign.sso.*)        — Authelia OIDC [bonus]
+  services.sovereign.censorship.*      ← this layer
+            │
+            ├── configures ──►  services.tor            (nixpkgs, upstream)
+            │
+            └── publishes  ──►  services.sovereign.matrix
+                                services.sovereign.syncthing
+                                services.sovereign.sso
+                                services.sovereign.monitoring
 ```
 
-## Integration points
+Two rules shape every decision below:
 
-- **Monitoring → Matrix**: Alerts delivered via Matrix webhook
-- **Backup → Matrix**: Success/failure notifications
-- **SSO → Matrix**: OIDC authentication
-- **SSO → Monitoring**: OIDC authentication
-- **Monitoring → Services**: Prometheus auto-discovers enabled services
-- **Backup → Services**: Pre-backup hooks stop services, post-backup restarts them
+1. **Configure upstream, never replace it.** Options live under `services.sovereign.censorship`
+   and drive nixpkgs' own `services.tor`. Reading that module's source — rather than assuming
+   — showed `relay.role = "bridge"` already configures obfs4 via `mkDefault`, so our duplicate
+   of that logic was removed once found.
+2. **Reachability is not security.** This layer keeps a deployment reachable under network
+   blocking. It does not protect a compromised host, and it does not eliminate the metadata
+   the Matrix protocol leaks by design.
 
-## Security
+## Onion publishing
 
-- File-based secrets compatible with sops-nix/agenix — bridge tokens and
-  OIDC/TURN secrets are real `*_secret_path`/`*_secret_file` options
-  (`client_secret_path`, `turn_shared_secret_path`,
-  `static-auth-secret-file`), not placeholder values; credential rotation
-  confirmed working (`preStart` re-reads the file on restart)
-- TLS via ACME/Let's Encrypt by default
-- OIDC (Authelia — the only OIDC provider currently packaged in nixpkgs 24.05)
-  for user-facing services
-- Backup encryption at rest and in transit
+Each service opts in independently. All toggles default to `false`, including Matrix — an
+earlier draft defaulted Matrix to `true`, which made a safety assertion fail whenever Matrix
+itself was disabled.
 
-## Known bugs fixed during review
+The homeserver is published as an onion service for the **client API**. Federation over onion
+is deliberately out of scope: Matrix federation assumes reachable, discoverable servers, and
+pretending otherwise would mislead an operator.
 
-- `matrix.nix`/`monitoring.nix`: `mkIf` combined via `//` doesn't unwrap —
-  SSO/TURN config for Matrix, and node-exporter targets for monitoring, were
-  silently never reaching the underlying service config. Fixed with
-  `lib.optionalAttrs`/`lib.optionals`.
-- `backup.nix`: multi-repository backups shared one concatenated passphrase
-  across all repos instead of one per repo. Fixed.
-- `syncthing.nix`: notify unit used `http://` against a GUI configured for
-  `useTLS = true`, and `Restart=on-failure` on a script that exits 0 after one
-  pass (never restarted after the first run). Fixed.
+## Bridge relay
+
+An obfs4 bridge contributes capacity to the shared Tor network. A bridge, unlike an exit
+relay, performs no exit to the open internet — so it generates no abuse complaints and needs
+no incident-handling process, which is what makes it realistic for a small operator to run.
+
+Design consequence worth stating: a public bridge is discoverable by design. obfs4 resists
+deep packet inspection but does not make a bridge unenumerable. The defence is aggregate
+network capacity, not secrecy about any single relay.
+
+## Metadata hardening
+
+A `highRiskMode` reduces what the stack retains about its users. This created a genuine
+conflict during design: reduced logging is exactly what you want for user privacy, and exactly
+what you do not want when you must later prove the relay ran for an audit.
+
+Resolved by separating the two concerns rather than compromising either:
+
+- **Tor's own aggregate statistics** (`ExtraInfoStatistics`, `DirReqStatistics`,
+  `BridgeRecordUsageByCountry`) — designed by the Tor Project for this purpose, never
+  sensitive to individual privacy.
+- **A dedicated uptime record**, containing no user data, written by service start/stop hooks
+  and therefore never subject to the log reduction in the first place.
+
+The record covers whenever Tor runs, not only when the bridge relay is enabled — an earlier
+design tied it to the relay, which left onion-only deployments with no evidence at all.
+
+## Lockdown
+
+One option forces onion-only reachability together with metadata hardening. Two properties
+matter more than the feature itself:
+
+- **Reversible.** NixOS' atomic generations mean `nixos-rebuild switch --rollback` undoes it.
+  An operator triggering this under pressure must be able to undo it under pressure.
+- **The bridge stays up.** Lockdown removes clearnet reachability of *services*; it must not
+  take down the relay, which serves the wider network rather than this deployment.
+
+## Upstream
+
+One contribution is planned back into nixpkgs: a typed
+`services.tor.settings.ServerTransportListenAddr` option. The freeform type already accepts
+the value today — the gap is that it is untyped and undocumented, unlike its sibling
+`ServerTransportPlugin` in the same file.
+
+## Verification approach
+
+Design intent is that every guarantee above is exercised by a NixOS VM test against the exact
+pinned nixpkgs revision, not a newer channel — including a two-node test where a second
+machine attempts the clearnet port under lockdown and must be refused while the bridge port
+stays reachable.
