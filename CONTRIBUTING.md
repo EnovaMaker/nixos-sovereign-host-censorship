@@ -1,25 +1,30 @@
 # Contributing
 
-## How to contribute
+## What this tree is
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run `nix flake check` to validate
-5. Submit a PR
+A **design preview**. It ships no modules, CLI or tests — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+for the design and [`docs/ROADMAP.md`](docs/ROADMAP.md) for what is planned and in what order.
 
-## Code style
+So the most useful contribution right now is not code. It is telling us where the design is
+wrong, before it is built:
 
-- Follow NixOS module conventions from nixpkgs
-- Use `mkOption` with `type`, `description`, `default`
-- All options must have sensible defaults
-- Use `lib.mkEnableOption` for boolean toggles
-- Document integration points with other modules
+- an operator's account of what actually breaks when a domain gets blocked
+- a reason one of the milestones will not work as described
+- prior art we missed — if something here already exists, we would rather know now
+- a security assumption that does not hold
 
-## Testing
+Open an issue. Design criticism at this stage is worth more than a patch.
 
-- Tests use NixOS VM test infrastructure
-- Run all: `nix flake check`
-- Run single: `nix build .#checks.x86_64-linux.test-synapse`
-- Each module has independent tests
-- `test-full-stack` validates cross-module integration
+## When there is code
+
+The implementation is published as milestones are delivered. Once modules land here, the
+conventions are the ones this series follows throughout:
+
+- NixOS module conventions from nixpkgs
+- `mkOption` with `type` and `description`; `lib.mkEnableOption` for boolean toggles
+- sensible defaults, and integration points with other modules documented
+- NixOS VM tests, run with `nix flake check`
+
+## Licence
+
+Contributions are accepted under the [MIT licence](LICENSE) this project uses.
