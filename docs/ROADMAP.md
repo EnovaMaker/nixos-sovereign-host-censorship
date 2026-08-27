@@ -22,10 +22,29 @@ Matrix homeserver is long-lived by definition.
 The add-on is packaged in nixpkgs but not in the revision this project pins, and no NixOS
 module for it exists anywhere.
 
-**Stated rather than hidden:** the add-on's last release activity was July 2024. It is not
-archived, it is authored by a core Tor developer, and it remains the Tor Project's standing
-recommendation for this case — but a dependency that has been quiet for two years is a risk an
-operator deserves to be told about, and documenting exactly that is part of the milestone.
+## Stated rather than hidden
+
+The add-on's last commit is **October 2023**, and its author has since moved to unrelated work.
+Three separate attempts to establish whether it is still maintained went unanswered: on IRC, on
+the `tor-relays` list in July 2026, and in an issue open since November 2023. It is not archived
+and it remains the Tor Project's standing recommendation for long-lived onion services, but
+nobody will confirm its status either way.
+
+There is also an open interaction bug worth naming:
+[`tpo/core/tor#40892`](https://gitlab.torproject.org/tpo/core/tor/-/issues/40892), *"Tor 0.4.8.9
+broken in combination with vanguards"*, open since November 2023. Connections drop mid-transfer
+when vanguards is running — reproducibly under Qubes PVH, KVM and VirtualBox, not on bare metal.
+Reports conflict: the reporter still saw it on 0.4.8.12, while a Tor Project member could not
+reproduce it on Debian under KVM. Most VPS hosting is KVM, so the ambiguity sits across exactly
+the kind of deployment this layer targets.
+
+**So this milestone commits to settling it rather than hoping.** In that thread Roger Dingledine
+asked for a `git bisect`, and the reporter replied that setting up a test environment was too
+labour-intensive and invited anyone else to try. Nobody has, in almost three years — the missing
+piece is reproducible test infrastructure, which is what this project already builds. We promise
+the test and the report, not a particular finding: if the interaction reproduces on the revision
+we pin, the Tor Project gets the reproduction it asked for; if it does not, a three-year-old
+question gets a documented answer.
 
 ## Best-effort, not guaranteed
 
