@@ -47,7 +47,7 @@ delivered.
 
 ## License
 
-[MIT](LICENSE) — Copyright (c) 2026 Delfim Leite (EnovaMaker)
+[MIT](LICENSE)
 
 ## Funding
 
