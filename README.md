@@ -34,8 +34,8 @@ Built on top of the existing `services.sovereign.*` modules, and on nixpkgs' own
 - **Not a fork of Tor tooling.** The Tor Project's onion services and the obfs4 pluggable
   transport are the primitives; we do not reimplement either.
 - **Not a replacement for `services.tor`.** nixpkgs already ships a mature module and we
-  configure it. Reading its source showed that `relay.role = "bridge"` already sets up obfs4
-  by default, so our own duplicate of that logic was deleted rather than kept.
+  configure it. As its source shows, `relay.role = "bridge"` already sets up obfs4
+  by default, so this layer will not duplicate that logic.
 - **Not a claim that your server is safe.** This makes a deployment *reachable under network
   blocking*. That is a different thing from secure, and conflating the two would be
   irresponsible toward anyone whose safety depends on it.

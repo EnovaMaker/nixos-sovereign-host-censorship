@@ -18,18 +18,16 @@
 Two rules shape every decision below:
 
 1. **Configure upstream, never replace it.** Options live under `services.sovereign.censorship`
-   and drive nixpkgs' own `services.tor`. Reading that module's source — rather than assuming
-   — showed `relay.role = "bridge"` already configures obfs4 via `mkDefault`, so our duplicate
-   of that logic was removed once found.
+   and drive nixpkgs' own `services.tor`. As that module's source shows, `relay.role = "bridge"` already
+   configures obfs4 via `mkDefault`, so this layer will not duplicate that logic.
 2. **Reachability is not security.** This layer keeps a deployment reachable under network
    blocking. It does not protect a compromised host, and it does not eliminate the metadata
    the Matrix protocol leaks by design.
 
 ## Onion publishing
 
-Each service opts in independently. All toggles default to `false`, including Matrix — an
-earlier draft defaulted Matrix to `true`, which made a safety assertion fail whenever Matrix
-itself was disabled.
+Each service opts in independently. All toggles default to `false`, including Matrix: a default
+of `true` would make a safety assertion fail whenever Matrix itself is disabled.
 
 The homeserver is published as an onion service for the **client API**. Federation over onion
 is deliberately out of scope: Matrix federation assumes reachable, discoverable servers, and
@@ -51,7 +49,7 @@ A `highRiskMode` reduces what the stack retains about its users. This created a 
 conflict during design: reduced logging is exactly what you want for user privacy, and exactly
 what you do not want when you must later prove the relay ran for an audit.
 
-Resolved by separating the two concerns rather than compromising either:
+The design separates the two concerns rather than compromising either:
 
 - **Tor's own aggregate statistics** (`ExtraInfoStatistics`, `DirReqStatistics`,
   `BridgeRecordUsageByCountry`) — designed by the Tor Project for this purpose, never
@@ -59,8 +57,8 @@ Resolved by separating the two concerns rather than compromising either:
 - **A dedicated uptime record**, containing no user data, written by service start/stop hooks
   and therefore never subject to the log reduction in the first place.
 
-The record covers whenever Tor runs, not only when the bridge relay is enabled — an earlier
-design tied it to the relay, which left onion-only deployments with no evidence at all.
+The record covers whenever Tor runs, not only when the bridge relay is enabled: tying it to
+the relay would leave onion-only deployments with no evidence at all.
 
 ## Lockdown
 
@@ -82,6 +80,6 @@ the value today — the gap is that it is untyped and undocumented, unlike its s
 ## Verification approach
 
 Design intent is that every guarantee above is exercised by a NixOS VM test against the exact
-pinned nixpkgs revision, not a newer channel — including a two-node test where a second
+nixpkgs revision this design targets, not a newer channel — including a two-node test where a second
 machine attempts the clearnet port under lockdown and must be refused while the bridge port
 stays reachable.

@@ -9,7 +9,7 @@ So the most useful contribution right now is not code. It is telling us where th
 wrong, before it is built:
 
 - an operator's account of what actually breaks when a domain gets blocked
-- a reason one of the milestones will not work as described
+- a reason one of the phases will not work as described
 - prior art we missed — if something here already exists, we would rather know now
 - a security assumption that does not hold
 
