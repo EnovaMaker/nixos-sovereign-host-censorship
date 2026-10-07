@@ -42,14 +42,8 @@ Built on top of the existing `services.sovereign.*` modules, and on nixpkgs' own
 
 ## Status
 
-Design preview. The implementation lives in a private tree and is published as milestones are
-delivered.
+Design preview. Architecture and roadmap are in `docs/`.
 
 ## License
 
 [MIT](LICENSE)
-
-## Funding
-
-Prepared as a proposal to the [Open Technology Fund](https://www.opentech.fund/) Internet
-Freedom Fund. Not yet awarded; this repository is a design preview, not a funded deliverable.

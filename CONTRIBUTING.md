@@ -17,7 +17,7 @@ Open an issue. Design criticism at this stage is worth more than a patch.
 
 ## When there is code
 
-The implementation is published as milestones are delivered. Once modules land here, the
+Once modules land here, the
 conventions are the ones this series follows throughout:
 
 - NixOS module conventions from nixpkgs

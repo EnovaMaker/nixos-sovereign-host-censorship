@@ -1,7 +1,6 @@
 # Roadmap — censorship-resilience layer
 
-> Design preview. Milestone numbering follows the proposal to the Open Technology Fund's
-> Internet Freedom Fund. Months are relative to a funded start, not calendar dates.
+> Design preview. Months are relative to a start date, not calendar dates.
 
 | Milestone | Months | Guaranteed core |
 |---|---|---|
@@ -76,6 +75,6 @@ anti-censorship community.
 ## Relationship to `nixos-sovereign-host`
 
 This layer builds on the module framework published at
-[`nixos-sovereign-host`](https://github.com/EnovaMaker/nixos-sovereign-host) and is funded
-separately, by a different funder, for a different layer. The two share a codebase but no
-budget line, and neither milestone set depends on the other.
+[`nixos-sovereign-host`](https://github.com/EnovaMaker/nixos-sovereign-host) and is planned
+separately, as a different layer. The two share a codebase, and neither set of milestones
+depends on the other.
